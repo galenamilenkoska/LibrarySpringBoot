@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class BookServiceImpl implements BookService {
@@ -34,54 +35,54 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
-    public Book findById(Long id) {
-        return this.bookRepository.findById(id).orElseThrow(BookDoesNotExistException::new);
+    public Optional<Book> findById(Long id) {
+        return Optional.of(this.bookRepository.findById(id).orElseThrow(BookDoesNotExistException::new));
     }
 
     @Override
     @Transactional
-    public Book create(String name, String category, Long authorId, Integer availableCopies) {
+    public Optional<Book> create(String name, String category, Long authorId, Integer availableCopies) {
         Author author=this.authorService.findById(authorId);
         Book book=new Book(name, Category.valueOf(category),author,availableCopies);
         this.applicationEventPublisher.publishEvent(new BookCreatedEvent(book));
-        return this.bookRepository.save(book);
+        return Optional.of(this.bookRepository.save(book));
     }
 
     @Override
-    public Book create(BookDto bookDto) {
+    public Optional<Book> create(BookDto bookDto) {
         Author author=this.authorService.findById(bookDto.getAuthor());
         Book book=new Book(bookDto.getName(), Category.valueOf(bookDto.getCategory()),author,bookDto.getAvailableCopies());
         this.applicationEventPublisher.publishEvent(new BookCreatedEvent(book));
-        return this.bookRepository.save(book);
+        return Optional.of(this.bookRepository.save(book));
     }
 
     @Override
     @Transactional
-    public Book update(Long id, String name, String category, Long authorId, Integer availableCopies) {
-        Book book=this.findById(id);
+    public Optional<Book> update(Long id, String name, String category, Long authorId, Integer availableCopies) {
+        Book book=this.bookRepository.findById(id).orElseThrow();
         book.setName(name);
         Author author=this.authorService.findById(authorId);
         book.setAuthor(author);
         book.setCategory(Category.valueOf(category));
         book.setAvailableCopies(availableCopies);
-        return this.bookRepository.save(book);
+        return Optional.of(this.bookRepository.save(book));
     }
 
     @Override
-    public Book update(Long id,BookDto bookDto) {
-        Book book=this.findById(id);
+    public Optional<Book> update(Long id,BookDto bookDto) {
+        Book book=this.findById(id).orElseThrow();
         book.setName(bookDto.getName());
         Author author=this.authorService.findById(bookDto.getAuthor());
         book.setAuthor(author);
         book.setCategory(Category.valueOf(bookDto.getCategory()));
         book.setAvailableCopies(bookDto.getAvailableCopies());
-        return this.bookRepository.save(book);
+        return Optional.of(this.bookRepository.save(book));
     }
 
     @Override
-    public Book delete(Long id) {
-        Book book=this.findById(id);
+    public Optional<Book> delete(Long id) {
+        Book book=this.findById(id).orElseThrow();
         this.bookRepository.delete(book);
-        return book;
+        return Optional.of(book);
     }
 }

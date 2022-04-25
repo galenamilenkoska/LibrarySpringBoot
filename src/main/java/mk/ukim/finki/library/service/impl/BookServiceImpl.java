@@ -4,23 +4,28 @@ import mk.ukim.finki.library.domain.exceptions.BookDoesNotExistException;
 import mk.ukim.finki.library.domain.models.Author;
 import mk.ukim.finki.library.domain.models.Book;
 import mk.ukim.finki.library.domain.models.Category;
-import mk.ukim.finki.library.domain.repository.AuthorRepository;
+import mk.ukim.finki.library.domain.models.dto.BookDto;
+import mk.ukim.finki.library.domain.models.events.BookCreatedEvent;
 import mk.ukim.finki.library.domain.repository.BookRepository;
 import mk.ukim.finki.library.service.AuthorService;
 import mk.ukim.finki.library.service.BookService;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
 import java.util.List;
 
 @Service
 public class BookServiceImpl implements BookService {
 
-    BookRepository bookRepository;
-    AuthorService authorService;
+    final BookRepository bookRepository;
+    final AuthorService authorService;
+    final ApplicationEventPublisher applicationEventPublisher;
 
-    public BookServiceImpl(BookRepository bookRepository, AuthorService authorService) {
+    public BookServiceImpl(BookRepository bookRepository, AuthorService authorService, ApplicationEventPublisher applicationEventPublisher) {
         this.bookRepository = bookRepository;
         this.authorService = authorService;
+        this.applicationEventPublisher = applicationEventPublisher;
     }
 
     @Override
@@ -34,12 +39,24 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
+    @Transactional
     public Book create(String name, String category, Long authorId, Integer availableCopies) {
         Author author=this.authorService.findById(authorId);
-        return this.bookRepository.save(new Book(name, Category.valueOf(category),author,availableCopies));
+        Book book=new Book(name, Category.valueOf(category),author,availableCopies);
+        this.applicationEventPublisher.publishEvent(new BookCreatedEvent(book));
+        return this.bookRepository.save(book);
     }
 
     @Override
+    public Book create(BookDto bookDto) {
+        Author author=this.authorService.findById(bookDto.getAuthor());
+        Book book=new Book(bookDto.getName(), Category.valueOf(bookDto.getCategory()),author,bookDto.getAvailableCopies());
+        this.applicationEventPublisher.publishEvent(new BookCreatedEvent(book));
+        return this.bookRepository.save(book);
+    }
+
+    @Override
+    @Transactional
     public Book update(Long id, String name, String category, Long authorId, Integer availableCopies) {
         Book book=this.findById(id);
         book.setName(name);
@@ -47,6 +64,17 @@ public class BookServiceImpl implements BookService {
         book.setAuthor(author);
         book.setCategory(Category.valueOf(category));
         book.setAvailableCopies(availableCopies);
+        return this.bookRepository.save(book);
+    }
+
+    @Override
+    public Book update(Long id,BookDto bookDto) {
+        Book book=this.findById(id);
+        book.setName(bookDto.getName());
+        Author author=this.authorService.findById(bookDto.getAuthor());
+        book.setAuthor(author);
+        book.setCategory(Category.valueOf(bookDto.getCategory()));
+        book.setAvailableCopies(bookDto.getAvailableCopies());
         return this.bookRepository.save(book);
     }
 

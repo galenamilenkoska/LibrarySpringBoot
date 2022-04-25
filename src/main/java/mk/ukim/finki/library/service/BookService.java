@@ -2,6 +2,8 @@ package mk.ukim.finki.library.service;
 
 import mk.ukim.finki.library.domain.models.Book;
 import mk.ukim.finki.library.domain.models.dto.BookDto;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,5 +23,7 @@ public interface BookService {
     Optional<Book> update(Long id,BookDto bookDto);
 
     Optional<Book> delete(Long id);
+
+    Page<Book> findAllWithPagination(Pageable pageable);
 
 }

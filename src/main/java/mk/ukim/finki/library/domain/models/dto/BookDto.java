@@ -3,10 +3,6 @@ package mk.ukim.finki.library.domain.models.dto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import mk.ukim.finki.library.domain.models.Author;
-import mk.ukim.finki.library.domain.models.Category;
-
-import javax.persistence.*;
 
 
 @Data
